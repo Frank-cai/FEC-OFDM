@@ -14,9 +14,15 @@
  * 
  */
 void hamming84_encoder(unsigned char infoBits[], unsigned char encBits[]) {
-    /*
-    * Insert your code here
-    */
+    encBits[0] = infoBits[0];
+    encBits[1] = infoBits[1];
+    encBits[2] = infoBits[2];
+    encBits[3] = infoBits[3];
+    encBits[4] = (infoBits[0]+infoBits[1]+infoBits[3])%2;
+    encBits[5] = (infoBits[0]+infoBits[2]+infoBits[3])%2;
+    encBits[6] = (infoBits[1]+infoBits[2]+infoBits[3])%2;
+    encBits[7] = (infoBits[0]+infoBits[1]+infoBits[2]+infoBits[3]+encBits[4]+encBits[5]+encBits[6])%2;
+
 }
 
 
@@ -28,9 +34,11 @@ void hamming84_encoder(unsigned char infoBits[], unsigned char encBits[]) {
  * 
  */
 void fec_encoder(unsigned char infoBits[], unsigned char encBits[], int infoBitsLen) {
-    /*
-    * Insert your code here
-    */
+    for(int i = 0; i < infoBitsLen/4; i++){
+        hamming84_encoder(infoBits, encBits);
+        infoBits += 4;
+        encBits += 8;
+    }
 }
 
 
@@ -52,9 +60,12 @@ void fec_encoder(unsigned char infoBits[], unsigned char encBits[], int infoBits
  * >>
  */
 void bit_interleaver(unsigned char bitSeq[], unsigned char mat[], int bitSeqLen, int numCols) {
-    /*
-    * Insert your code here
-    */
+    for(int i = 0; i < bitSeqLen; i++){
+        mat[i] = bitSeq[i];
+    }
+    for(int j = 0; j < bitSeqLen; j++){
+        bitSeq[j] = mat[(j%(bitSeqLen/numCols))*numCols+floor(j/(bitSeqLen/numCols))];
+    }
 }
 
 //////////////////////////////////////
@@ -76,9 +87,36 @@ void bit_interleaver(unsigned char bitSeq[], unsigned char mat[], int bitSeqLen,
  * 
  */
 int hamming84_decoder(unsigned char encBits[], unsigned char infoBits[]) {
-    /*
-    * Insert your code here
-    */
+    int s0,s1,s2,s3;
+    s0 = (encBits[0]+encBits[1]+encBits[2]+encBits[3]+encBits[4]+encBits[5]+encBits[6]+encBits[7])%2;
+    s1 = (encBits[0]+encBits[1]+encBits[3]+encBits[4])%2;
+    s2 = (encBits[0]+encBits[2]+encBits[3]+encBits[5])%2;
+    s3 = (encBits[1]+encBits[2]+encBits[3]+encBits[6])%2;
+    
+    if((s0+s1+s2+s3) == 0)
+    {
+        infoBits[0] = encBits[0];
+        infoBits[1] = encBits[1];
+        infoBits[2] = encBits[2];
+        infoBits[3] = encBits[3];
+        return 0;
+    }
+    else if ((s1+s2+s3) > 0)
+    {
+        infoBits[0] = (s1+s2+encBits[0])%2;
+        infoBits[1] = (s1+s3+encBits[1])%2;
+        infoBits[2] = (s2+s3+encBits[2])%2;
+        infoBits[3] = (s1+s2+s3+encBits[3])%2;
+        return 1;
+    }
+    else{
+        infoBits[0] = encBits[0];
+        infoBits[1] = encBits[1];
+        infoBits[2] = encBits[2];
+        infoBits[3] = encBits[3];
+        return 2;
+    }
+    
 }
 
 
@@ -96,9 +134,11 @@ int hamming84_decoder(unsigned char encBits[], unsigned char infoBits[]) {
  *              1 - at least one codeword is uncorrectable
  */
 int fec_decoder(unsigned char encBits[], unsigned char infoBits[], int infoBitsLen) {
-    /*
-    * Insert your code here
-    */
+    for(int i = 0; i < infoBitsLen/4; i++){
+        hamming84_decoder(encBits, infoBits);
+        infoBits += 4;
+        encBits += 8;
+    }
 }
 
 
@@ -119,7 +159,10 @@ int fec_decoder(unsigned char encBits[], unsigned char infoBits[], int infoBitsL
  * >>
  */
 void bit_deinterleaver(unsigned char bitSeq[], unsigned char mat[], int bitSeqLen, int numCols) {
-    /*
-    * Insert your code here
-    */
+    for(int i = 0; i < bitSeqLen; i++){
+        mat[i] = mat[(i%(bitSeqLen/numCols))*numCols+floor(i/(bitSeqLen/numCols))];
+    }
+    for(int j = 0; j < bitSeqLen; j++){
+        bitSeq[j] = mat[j];
+    }
 }
