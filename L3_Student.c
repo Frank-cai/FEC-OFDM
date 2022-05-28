@@ -102,7 +102,7 @@ int hamming84_decoder(unsigned char encBits[], unsigned char infoBits[]) {
         infoBits[3] = encBits[3];
         return 0;
     }
-    else if ((s1+s2+s3) > 1)
+    else if ((s1+s2+s3) > 1 && s0 == 1)
     {
         infoBits[0] = encBits[0];
         infoBits[1] = encBits[1];
